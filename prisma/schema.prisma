@@ -1,0 +1,126 @@
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   @default("password123") // 실제 운영시에는 해싱 필요
+  name      String?
+  role      String   @default("GUARDIAN") // "ADMIN", "STAFF", "GUARDIAN"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  dailyReports    DailyReport[]
+  behaviorRecords BehaviorRecord[]
+  assignedPatients Patient[]       @relation("AssignedPatients")
+
+  // Settings
+  notificationsEnabled Boolean @default(true)
+  darkMode             Boolean @default(false)
+}
+
+model Patient {
+  id            String   @id @default(uuid())
+  name          String
+  birthDate     DateTime?
+  disabilityType String?
+  healthInfo    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 담당 종사자 지정
+  assignedStaffId String?
+  assignedStaff   User?    @relation("AssignedPatients", fields: [assignedStaffId], references: [id])
+
+  dailyReports    DailyReport[]
+  behaviorRecords BehaviorRecord[]
+  carePlans       CarePlan[]
+  behaviorPlans   PositiveBehaviorPlan[]
+}
+
+model DailyReport {
+  id              String   @id @default(uuid())
+  date            DateTime @default(now())
+  sleepQuality    String?  // "GOOD", "FAIR", "POOR"
+  mealStatus      String?  // "GOOD", "REJECT", "NORMAL"
+  mood            String?  // "HAPPY", "ANXIOUS", "ANGRY"
+  notes           String?
+  
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  staffId         String
+  staff           User     @relation(fields: [staffId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
+
+model BehaviorRecord {
+  id              String   @id @default(uuid())
+  recordDate      DateTime @default(now())
+  
+  // ABC Model
+  antecedent      String?  // 선행사건
+  behaviorType    String   // 행동유형 (자해, 타해, 파괴 등)
+  intensity       String?  // 강도 (LOW, MID, HIGH)
+  durationMin     Int?     // 지속시간(분)
+  consequence     String?  // 결과 및 중재
+  behaviorDetail  String?  // 상세 행동 기록 (텍스트 입력)
+  
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  staffId         String
+  staff           User     @relation(fields: [staffId], references: [id])
+
+  createdAt       DateTime @default(now())
+}
+
+model CarePlan {
+  id              String   @id @default(uuid())
+  goal            String
+  planDetails     String
+  startDate       DateTime?
+  endDate         DateTime?
+
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SystemSetting {
+  id              String   @id @default("GLOBAL_CONFIG")
+  aiEnabled       Boolean  @default(true)
+  alertThreshold  String   @default("Medium") // "Low", "Medium", "High"
+  reportFrequency String   @default("weekly") // "daily", "weekly", "monthly"
+  
+  updatedAt       DateTime @updatedAt
+}
+
+model PositiveBehaviorPlan {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  
+  // 기능 분석 결과 (AI 가설: 관심, 회피, 획득, 감각, 놀이 등)
+  behaviorTitle    String?  @default("주요 도전행동")
+  functionAnalyzed String   
+  
+  // PBS 4대 중재 전략
+  antecedentStrategy  String  // 선행사건 중재
+  replacementSkill    String  // 대체기술 교수
+  consequenceStrategy String  // 후속결과 중재
+  longTermSupport     String  // 장기적 지원
+  
+  evaluation      String?   // 전문가 평가 및 피드백
+  interventions   String?   // 상세 중재 문구
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
