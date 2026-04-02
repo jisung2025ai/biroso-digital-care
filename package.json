@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres next build",
-    "start": "next start",
+    "start": "npx prisma db push && next start",
     "lint": "eslint",
     "db:seed": "tsx src/scripts/seed-patients.ts",
     "postinstall": "prisma generate"
