@@ -8,7 +8,7 @@
     "start": "npx prisma db push && npx prisma db seed && next start",
     "lint": "eslint",
     "db:seed": "tsx src/scripts/seed-patients.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres prisma generate"
   },
   "prisma": {
     "seed": "tsx src/scripts/seed-patients.ts"
