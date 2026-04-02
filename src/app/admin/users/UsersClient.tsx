@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, UserCheck, Search, Plus, Edit2, Trash2, UserCog, ShieldCheck } from "lucide-react";
+import { Users, User, UserCheck, Search, Plus, Edit2, Trash2, UserCog, ShieldCheck } from "lucide-react";
 import PatientForm from "./PatientForm";
 import StaffForm from "./StaffForm";
 import { deletePatient } from "@/lib/actions/patients";
@@ -15,6 +15,7 @@ interface PatientItem {
   healthInfo?: string;
   assignedStaffId?: string;
   guardianId?: string;
+  guardianName?: string;
   staffName?: string;
   createdAt: string; 
   behaviorCount: number; 
@@ -35,6 +36,8 @@ interface GuardianItem {
   email: string;
   role: string;
   createdAt: string;
+  patientName?: string;
+  patientId?: string;
 }
 
 export default function UsersClient({ 
@@ -159,6 +162,7 @@ export default function UsersClient({
                 <th className="px-6 py-4">이용자명</th>
                 <th className="px-6 py-4">장애유형</th>
                 <th className="px-6 py-4">담당 종사자</th>
+                <th className="px-6 py-4">보호자</th>
                 <th className="px-6 py-4">기록 수</th>
                 <th className="px-6 py-4 text-center">관리</th>
               </tr>
@@ -186,6 +190,17 @@ export default function UsersClient({
                   </td>
                   <td className="px-6 py-4 font-black">{p.behaviorCount}건</td>
                   <td className="px-6 py-4">
+                    {p.guardianName && p.guardianName !== "연결 없음" ? (
+                      <div className="flex items-center gap-2 text-teal-400">
+                        <User size={14} />
+                        <span className="font-bold">{p.guardianName}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600 text-xs italic">미지정</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 font-black">{p.behaviorCount}건</td>
+                  <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => handleEditPatient(p)} className="p-2 text-slate-400 hover:text-blue-400"><Edit2 size={16}/></button>
                       <button onClick={() => handleDeletePatient(p.id, p.name)} className="p-2 text-slate-400 hover:text-red-400"><Trash2 size={16}/></button>
@@ -206,6 +221,7 @@ export default function UsersClient({
                 <th className="px-6 py-4">이름</th>
                 <th className="px-6 py-4">이메일</th>
                 <th className="px-6 py-4">역할</th>
+                <th className="px-6 py-4">{tab === "guardians" ? "담당 이용자" : ""}</th>
                 <th className="px-6 py-4 text-center">관리</th>
               </tr>
             </thead>
@@ -222,6 +238,16 @@ export default function UsersClient({
                     }`}>
                       {u.role}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {tab === "guardians" && (u as GuardianItem).patientName ? (
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Users size={14} className="text-teal-400" />
+                        <span className="font-bold">{(u as GuardianItem).patientName}</span>
+                      </div>
+                    ) : tab === "guardians" ? (
+                      <span className="text-slate-600 text-xs italic">미지정</span>
+                    ) : null}
                   </td>
                   <td className="px-6 py-4">
                   {(userRole === "ADMIN" || (userRole === "STAFF" && u.role === "GUARDIAN")) && (
