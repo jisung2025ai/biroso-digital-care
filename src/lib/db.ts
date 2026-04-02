@@ -1,28 +1,28 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-// Lazy getter: 모듈 임포트 시 즉시 연결하지 않고, 실제 사용 시점에 생성
-// 이 방식으로 빌드 단계(force-dynamic 페이지의 정적 분석 포함)에서 DB 연결 시도를 방지함
-function getPrismaClient(): PrismaClient {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = new PrismaClient({
-      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres",
-        },
-      },
-    } as any);
-  }
-  return globalForPrisma.prisma;
+function createPrismaClient(): PrismaClient {
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:postgres@localhost:5432/postgres";
+
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+
+  return new PrismaClient({ adapter } as any);
 }
 
-// prisma를 직접 사용하는 기존 코드와의 호환성을 위해 Proxy로 export
-// 실제 PrismaClient는 첫 번째 메서드 호출 시점에 생성됨
+// Proxy 기반 Lazy 초기화: 빌드 단계에서 모듈을 임포트해도 실제 PrismaClient는
+// 첫 DB 메서드 호출 시점에만 생성됨 (빌드-타임 DB 연결 방지)
 export const prisma = new Proxy({} as PrismaClient, {
   get(_, prop) {
-    const client = getPrismaClient();
+    if (!globalForPrisma.prisma) {
+      globalForPrisma.prisma = createPrismaClient();
+    }
+    const client = globalForPrisma.prisma;
     const value = (client as any)[prop];
     return typeof value === "function" ? value.bind(client) : value;
   },
