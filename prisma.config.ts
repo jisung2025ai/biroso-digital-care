@@ -10,6 +10,7 @@ export default defineConfig({
     seed: "npx tsx src/scripts/seed-patients.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // 빌드 시점에 DATABASE_URL이 없을 경우 더미 URL 사용 (prisma generate 통과용)
+    url: process.env["DATABASE_URL"] ?? "postgresql://postgres:postgres@localhost:5432/postgres",
   },
 });
