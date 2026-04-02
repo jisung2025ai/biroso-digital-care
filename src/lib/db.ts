@@ -17,9 +17,22 @@ export const getPrisma = () => {
   }
 
   if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = new PrismaClient({
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    // Prisma 옵션 객체 동적 생성 (빌드 시 하드코딩된 URL 대신 런타임 환경변수 주입)
+    const prismaOptions: any = {
       log: ["query", "error", "warn"],
-    });
+    };
+
+    if (databaseUrl && process.env.NEXT_PHASE !== "phase-production-build") {
+      prismaOptions.datasources = {
+        db: {
+          url: databaseUrl,
+        },
+      };
+    }
+
+    globalForPrisma.prisma = new PrismaClient(prismaOptions);
   }
   return globalForPrisma.prisma;
 };

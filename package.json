@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres prisma generate && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres next build",
+    "build": "next build",
     "start": "npx prisma db push && npx prisma db seed && next start",
     "lint": "eslint",
     "db:seed": "tsx src/scripts/seed-patients.ts",
-    "postinstall": "echo 'Skipping prisma generate in postinstall'"
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx src/scripts/seed-patients.ts"
