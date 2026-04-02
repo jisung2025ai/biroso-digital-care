@@ -188,7 +188,6 @@ export default function UsersClient({
                       <span className="text-slate-600 text-xs italic">미지정</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 font-black">{p.behaviorCount}건</td>
                   <td className="px-6 py-4">
                     {p.guardianName && p.guardianName !== "연결 없음" ? (
                       <div className="flex items-center gap-2 text-teal-400">
