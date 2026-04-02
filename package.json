@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "npx prisma db push --skip-generate || true && npx prisma db seed || true && next start -p ${PORT:-3000} -H 0.0.0.0",
+    "build": "prisma generate && next build",
+    "start": "prisma db push && next start -p ${PORT:-3000} -H 0.0.0.0",
     "lint": "eslint",
     "db:seed": "tsx src/scripts/seed-patients.ts",
     "postinstall": "prisma generate"
@@ -14,12 +14,10 @@
     "seed": "tsx src/scripts/seed-patients.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "6.19.3",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "next-auth": "^4.24.13",
-    "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1"
@@ -27,7 +25,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.3.1",

@@ -14,10 +14,15 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         const db = getDb();
+        let user = null;
 
-        let user = await db.user.findUnique({
-          where: { email: credentials.email }
-        });
+        try {
+          user = await db.user.findUnique({
+            where: { email: credentials.email }
+          });
+        } catch (e) {
+          console.error("[Auth] DB findUnique error:", e);
+        }
 
         // DB에 계정이 없고 admin@broso.com으로 로그인 시도 시 자동 생성
         if (!user && credentials.email === "admin@broso.com" && credentials.password === "password123") {
