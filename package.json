@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "npx prisma db push && npx prisma db seed && next start",
+    "start": "npx prisma db push --skip-generate || true && npx prisma db seed || true && next start -p ${PORT:-3000} -H 0.0.0.0",
     "lint": "eslint",
     "db:seed": "tsx src/scripts/seed-patients.ts",
     "postinstall": "prisma generate"
