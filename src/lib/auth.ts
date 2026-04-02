@@ -14,12 +14,29 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         const db = getDb();
-        const user = await db.user.findUnique({
+
+        let user = await db.user.findUnique({
           where: { email: credentials.email }
         });
 
+        // DB에 계정이 없고 admin@broso.com으로 로그인 시도 시 자동 생성
+        if (!user && credentials.email === "admin@broso.com" && credentials.password === "password123") {
+          try {
+            user = await db.user.create({
+              data: {
+                email: "admin@broso.com",
+                password: "password123",
+                name: "최고관리자",
+                role: "ADMIN",
+              }
+            });
+            console.log("[Auth] Default admin account auto-created.");
+          } catch (e) {
+            console.error("[Auth] Failed to auto-create admin:", e);
+          }
+        }
+
         if (user && user.password === credentials.password) {
-          // 실제 운영 환경에서는 bcrypt 등으로 해싱된 비밀번호를 비교해야 함
           return {
             id: user.id,
             name: user.name,
