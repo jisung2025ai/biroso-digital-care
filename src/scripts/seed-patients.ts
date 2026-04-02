@@ -3,8 +3,23 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // 1. 기본 관리자 계정 생성
+  const userCount = await prisma.user.count();
+  if (userCount === 0) {
+    console.log("No users found. Creating default admin account...");
+    await prisma.user.create({
+      data: {
+        email: "admin@broso.com",
+        password: "password123", // 실제 운영시에는 해시처리 권장
+        name: "최고관리자",
+        role: "ADMIN"
+      }
+    });
+    console.log("Default admin account created: admin@broso.com / password123");
+  }
+
+  // 2. 기본 이용자 목록 생성
   const patientsCount = await prisma.patient.count();
-  
   if (patientsCount === 0) {
     console.log("No patients found. Creating seed patients...");
     await prisma.patient.createMany({
