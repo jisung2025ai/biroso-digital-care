@@ -224,7 +224,7 @@ export default function UsersClient({
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                  {userRole === "ADMIN" && (
+                  {(userRole === "ADMIN" || (userRole === "STAFF" && u.role === "GUARDIAN")) && (
                     <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => handleEditStaff(u)} className="p-2 text-slate-400 hover:text-blue-400"><Edit2 size={16}/></button>
                       <button onClick={() => handleDeleteStaff(u.id, u.name)} className="p-2 text-slate-400 hover:text-red-400"><Trash2 size={16}/></button>
@@ -252,6 +252,8 @@ export default function UsersClient({
         isOpen={isStaffFormOpen}
         onClose={() => setIsStaffFormOpen(false)}
         initialData={selectedStaff}
+        patients={patients}
+        userRole={userRole}
       />
     </div>
   );
