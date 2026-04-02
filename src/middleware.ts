@@ -5,14 +5,21 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
+    const role = token?.role as string | undefined;
 
-    // 관리자 전용 경로 보호 (ADMIN, STAFF 허용)
-    if (path.startsWith("/admin") && token?.role !== "ADMIN" && token?.role !== "STAFF") {
-      return NextResponse.redirect(new URL("/", req.url));
+    // /admin/* → ADMIN, STAFF만 허용
+    if (path.startsWith("/admin") && role !== "ADMIN" && role !== "STAFF") {
+      return NextResponse.redirect(new URL("/guardian", req.url));
     }
 
-    // 종사자/관리자 공동 경로 (기록 앱)
-    if (path === "/" && !(token?.role === "STAFF" || token?.role === "ADMIN")) {
+    // /guardian/* → GUARDIAN만 허용 (ADMIN/STAFF는 /admin으로)
+    if (path.startsWith("/guardian") && (role === "ADMIN" || role === "STAFF")) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+
+    // / → STAFF, ADMIN만 허용
+    if (path === "/" && role !== "STAFF" && role !== "ADMIN") {
+      if (role === "GUARDIAN") return NextResponse.redirect(new URL("/guardian", req.url));
       return NextResponse.redirect(new URL("/login", req.url));
     }
   },
@@ -24,5 +31,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/", "/admin/:path*"],
+  matcher: ["/", "/admin/:path*", "/guardian/:path*"],
 };

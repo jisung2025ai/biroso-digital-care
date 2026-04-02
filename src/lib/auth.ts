@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { getDb } from "./prisma";
 
 export const authOptions: NextAuthOptions = {
@@ -27,21 +28,40 @@ export const authOptions: NextAuthOptions = {
         // DB에 계정이 없고 admin@broso.com으로 로그인 시도 시 자동 생성
         if (!user && credentials.email === "admin@broso.com" && credentials.password === "password123") {
           try {
+            const hashed = await bcrypt.hash("password123", 10);
             user = await db.user.create({
               data: {
                 email: "admin@broso.com",
-                password: "password123",
+                password: hashed,
                 name: "최고관리자",
                 role: "ADMIN",
               }
             });
-            console.log("[Auth] Default admin account auto-created.");
+            console.log("[Auth] Default admin account auto-created (bcrypt).");
           } catch (e) {
             console.error("[Auth] Failed to auto-create admin:", e);
           }
         }
 
-        if (user && user.password === credentials.password) {
+        if (!user) return null;
+
+        // bcrypt 검증 (해싱된 비밀번호)
+        const isValidBcrypt = await bcrypt.compare(credentials.password, user.password).catch(() => false);
+        
+        // 평문 호환성 (기존 계정 마이그레이션)
+        const isValidPlain = !isValidBcrypt && user.password === credentials.password;
+
+        if (isValidBcrypt || isValidPlain) {
+          // 평문이었다면 이번 로그인 시 자동으로 bcrypt 해시로 업그레이드
+          if (isValidPlain) {
+            try {
+              const hashed = await bcrypt.hash(credentials.password, 10);
+              await db.user.update({ where: { id: user.id }, data: { password: hashed } });
+              console.log(`[Auth] Migrated password to bcrypt for: ${user.email}`);
+            } catch (e) {
+              console.error("[Auth] Password migration failed:", e);
+            }
+          }
           return {
             id: user.id,
             name: user.name,
@@ -59,7 +79,6 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.id = user.id;
       }
-      // 세션 업데이트 시 토큰 갱신 로직 (선택 사항)
       if (trigger === "update" && session) {
         return { ...token, ...session };
       }
@@ -78,7 +97,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30일 세션 유지
+    maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_dev_only",
 };

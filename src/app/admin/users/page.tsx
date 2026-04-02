@@ -37,15 +37,15 @@ export default async function UsersPage() {
     behaviorCount: p._count.behaviorRecords
   }));
 
-  // 종사자(Staff) 전체 목록 (STAFF인 경우 본인만 보여줌)
-  const staffsData = await db.user.findMany({
+  // 종사자 + 보호자 목록 분리 조회
+  const allUsers = await db.user.findMany({
     where: sCondition,
     include: {
       _count: { select: { behaviorRecords: true } }
     }
   });
 
-  const staffs = staffsData.map(u => ({
+  const staffs = allUsers.filter(u => u.role === "ADMIN" || u.role === "STAFF").map(u => ({
     id: u.id,
     name: u.name || "이름 없음",
     email: u.email,
@@ -54,5 +54,13 @@ export default async function UsersPage() {
     recordCount: u._count.behaviorRecords
   })).sort((a, b) => b.recordCount - a.recordCount);
 
-  return <UsersClient patients={patients} staffs={staffs} userRole={userRole} userId={userId} />;
+  const guardians = allUsers.filter(u => u.role === "GUARDIAN").map(u => ({
+    id: u.id,
+    name: u.name || "이름 없음",
+    email: u.email,
+    role: u.role,
+    createdAt: u.createdAt.toISOString(),
+  }));
+
+  return <UsersClient patients={patients} staffs={staffs} guardians={guardians} userRole={userRole} userId={userId} />;
 }

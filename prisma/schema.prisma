@@ -20,6 +20,7 @@ model User {
   dailyReports    DailyReport[]
   behaviorRecords BehaviorRecord[]
   assignedPatients Patient[]       @relation("AssignedPatients")
+  guardedPatients  Patient[]       @relation("GuardedPatients")
 
   // Settings
   notificationsEnabled Boolean @default(true)
@@ -38,6 +39,10 @@ model Patient {
   // 담당 종사자 지정
   assignedStaffId String?
   assignedStaff   User?    @relation("AssignedPatients", fields: [assignedStaffId], references: [id])
+
+  // 보호자 연결
+  guardianId      String?
+  guardian        User?    @relation("GuardedPatients", fields: [guardianId], references: [id])
 
   dailyReports    DailyReport[]
   behaviorRecords BehaviorRecord[]

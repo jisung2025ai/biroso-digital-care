@@ -27,6 +27,7 @@ export async function createPatient(data: {
         disabilityType: data.disabilityType,
         healthInfo: data.healthInfo,
         assignedStaffId: finalStaffId,
+        guardianId: (data as any).guardianId || null,
       },
     });
 
@@ -64,6 +65,7 @@ export async function updatePatient(id: string, data: {
         disabilityType: data.disabilityType,
         healthInfo: data.healthInfo,
         assignedStaffId: finalStaffId,
+        guardianId: (data as any).guardianId === "" ? null : (data as any).guardianId,
       },
     });
 
