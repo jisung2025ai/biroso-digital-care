@@ -8,7 +8,7 @@ interface PatientFormProps {
   isOpen: boolean;
   onClose: () => void;
   staffs: { id: string; name: string }[];
-  guardians: { id: string; name: string }[];
+  guardians: { id: string; name: string; email?: string }[];
   initialData?: any;
   userRole?: string;
   userId?: string;
