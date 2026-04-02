@@ -6,8 +6,9 @@ import RemoteControlPanel from "@/components/RemoteControlPanel";
 import PatientInfoTab from "@/components/PatientInfoTab";
 import GuardianTab from "@/components/GuardianTab";
 import StaffSettingsTab from "@/components/StaffSettingsTab";
-import { Settings2, Bell } from "lucide-react";
+import { Settings2, Bell, LayoutDashboard } from "lucide-react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useNotifications } from "@/components/NotificationProvider";
 import DailyReportForm from "@/components/DailyReportForm";
 import { getDashboardStats } from "@/lib/actions/behavior";
@@ -71,11 +72,21 @@ export default function DashboardPage() {
         <div className="flex flex-col">
           <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-tight">현장 기록 보드</h1>
           <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-tighter">
-            2026.03.31 (수) · {session?.user?.name || "사용자"}
           </p>
         </div>
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-black shadow-lg shadow-green-500/20 rotate-3">
-          {session?.user?.name?.slice(0, 1) || "G"}
+        <div className="flex items-center gap-2">
+          {(session?.user as any)?.role && ['ADMIN', 'STAFF'].includes((session?.user as any)?.role) && (
+            <Link 
+              href="/admin" 
+              className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-900/10 hover:bg-black transition-all active:scale-95"
+              title="관리자 센터로 이동"
+            >
+              <LayoutDashboard size={20} />
+            </Link>
+          )}
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-black shadow-lg shadow-green-500/20 rotate-3">
+            {session?.user?.name?.slice(0, 1) || "G"}
+          </div>
         </div>
       </header>
 

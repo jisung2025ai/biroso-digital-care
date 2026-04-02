@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Database, User, Settings, LayoutDashboard, Zap } from "lucide-react";
+import { BarChart3, Database, User, Settings, LayoutDashboard, Zap, MonitorDot } from "lucide-react";
 
 import { signOut, useSession } from "next-auth/react";
 
@@ -70,18 +70,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 flex flex-col h-screen overflow-y-auto">
         <header className="h-16 border-b border-slate-800 flex items-center justify-between px-8 shrink-0 bg-[#0f172a]/80 backdrop-blur-sm sticky top-0 z-10">
           <h1 className="text-lg font-semibold text-white">데이터 애널리틱스</h1>
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end mr-2">
-              <span className="text-xs font-semibold text-white">[{role === 'ADMIN' ? '최고관리자' : '종사자'}] {session?.user?.name || "사용자"}</span>
-              <button 
-                onClick={() => signOut({ callbackUrl: "/login" })}
-                className="text-[10px] text-slate-500 hover:text-red-400 transition-colors uppercase tracking-widest font-bold"
-              >
-                Logout
-              </button>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-green-500 to-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-lg shadow-green-500/10">
-              {session?.user?.name?.slice(0, 1) || "A"}
+          <div className="flex items-center gap-6">
+            <Link 
+              href="/" 
+              className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 hover:bg-green-500/20 transition-all text-xs font-bold"
+            >
+              <MonitorDot size={14} />
+              현장 대시보드
+            </Link>
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-end mr-2">
+                <span className="text-xs font-semibold text-white">[{role === 'ADMIN' ? '최고관리자' : '종사자'}] {session?.user?.name || "사용자"}</span>
+                <button 
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="text-[10px] text-slate-500 hover:text-red-400 transition-colors uppercase tracking-widest font-bold"
+                >
+                  Logout
+                </button>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-green-500 to-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-lg shadow-green-500/10">
+                {session?.user?.name?.slice(0, 1) || "A"}
+              </div>
             </div>
           </div>
         </header>

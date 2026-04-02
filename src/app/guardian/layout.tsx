@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { Home, Activity, BookOpen, LogOut, Heart } from "lucide-react";
+import { Home, Activity, BookOpen, LogOut, Heart, LayoutDashboard } from "lucide-react";
 
 export default function GuardianLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -14,8 +14,8 @@ export default function GuardianLayout({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
-    if (status === "authenticated" && role !== "GUARDIAN") router.push("/admin");
-  }, [status, role, router]);
+    // 권한이 없으면 로그인 페이지로, 권한이 있으면 (최소한 로그인 상태면) 페이지 유지 가능하도록 변경
+  }, [status, router]);
 
   if (status === "loading") {
     return (
@@ -45,13 +45,24 @@ export default function GuardianLayout({ children }: { children: React.ReactNode
               <p className="text-[10px] text-teal-400">{session?.user?.name || "보호자"}</p>
             </div>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-2 text-xs text-slate-400 hover:text-red-400 transition-colors"
-          >
-            <LogOut size={14} />
-            로그아웃
-          </button>
+          <div className="flex items-center gap-4">
+            {role && ["ADMIN", "STAFF"].includes(role) && (
+              <Link 
+                href="/admin" 
+                className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/30 rounded-lg text-teal-400 hover:bg-teal-500/20 transition-all text-xs font-bold"
+              >
+                <LayoutDashboard size={14} />
+                관리자 센터
+              </Link>
+            )}
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex items-center gap-2 text-xs text-slate-400 hover:text-red-400 transition-colors"
+            >
+              <LogOut size={14} />
+              로그아웃
+            </button>
+          </div>
         </div>
       </header>
 
