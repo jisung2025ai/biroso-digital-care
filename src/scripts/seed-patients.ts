@@ -1,6 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Prisma 7: new PrismaClient() 빈 호출 불가, 반드시 옵션 객체 전달 필요
+const prisma = new PrismaClient({
+  log: ["error"],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres",
+    },
+  },
+} as any);
 
 async function main() {
   // 1. 기본 관리자 계정 생성
