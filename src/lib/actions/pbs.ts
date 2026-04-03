@@ -183,7 +183,8 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`AI API Error Response (${provider}):`, errorText);
-      throw new Error(`AI API 호출 실패 (${provider}): ${response.status} ${response.statusText}`);
+      // 에러 메시지에 응답 전문을 포함하여 클라이언트에서 확인할 수 있도록 함
+      throw new Error(`AI API 호출 실패 (${provider}): ${response.status} - ${errorText}`);
     }
 
     const aiResult = await response.json();
