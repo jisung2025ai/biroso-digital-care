@@ -1,6 +1,6 @@
 import { getAIAgentConfig } from "@/lib/actions/settings";
-import SettingsClient from "./SettingsClient";
-import { Settings, ShieldCheck } from "lucide-react";
+import SettingsClient from "./SettingsClientContainer";
+import { Settings, CheckCircle } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export default async function SettingsPage() {
           <p className="text-slate-500 mt-2 font-medium">기관별 AI 모델 연동 및 API 보안 설정을 관리합니다.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-[10px] font-black text-green-400 uppercase tracking-widest">
-          <ShieldCheck size={14} />
+          <CheckCircle size={14} />
           Secure Mode Active
         </div>
       </header>
