@@ -210,8 +210,14 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
       cleanedContent = cleanedContent.substring(jsonStart, jsonEnd + 1);
     }
 
-    // 2. JSON 문자열 내의 유효하지 않은 제어 문자만 제거 (표준 줄바꿈/탭은 유지)
-    cleanedContent = cleanedContent.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]+/g, "");
+    // 2. JSON 문자열 값 내부의 실제 줄바꿈 및 제어 문자만 정밀하게 이스케이프 (Bad control character 방지)
+    // 큰따옴표(") 사이의 내용물 중 제어 문자만 찾아 변환함
+    cleanedContent = cleanedContent.replace(/"((?:[^"\\]|\\.)*)"/g, (match, p1) => {
+      return '"' + p1.replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r')
+                    .replace(/\t/g, '\\t')
+                    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "") + '"';
+    });
 
     let aiResponse: PBSAnalysisResult;
     try {
