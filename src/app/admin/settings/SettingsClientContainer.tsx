@@ -38,10 +38,10 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
       if (result.success) {
         setMessage({ type: "success", text: "설정이 안전하게 저장되었습니다." });
       } else {
-        setMessage({ type: "error", text: "설정 저장 중 오류가 발생했습니다." });
+        setMessage({ type: "error", text: `설정 저장 실패: ${result.error || "알 수 없는 오류"}` });
       }
     } catch (err) {
-      setMessage({ type: "error", text: "시스템 오류가 발생했습니다." });
+      setMessage({ type: "error", text: "전송 중 시스템 오류가 발생했습니다." });
     } finally {
       setIsSaving(false);
     }
