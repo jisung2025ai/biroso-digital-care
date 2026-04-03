@@ -120,14 +120,33 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
 
     console.log(`[AI] 실행 모델: ${selectedModel}, 제공자: ${provider}`);
 
-    // Responses API 또는 OpenAI 규격 호출
-    const response = await fetch("https://api.responses.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
+    let apiUrl = "https://api.responses.ai/v1/chat/completions";
+    let headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    let body: any = {};
+
+    if (provider === "Anthropic") {
+      apiUrl = "https://api.anthropic.com/v1/messages";
+      headers["x-api-key"] = apiKey;
+      headers["anthropic-version"] = "2023-06-01";
+      body = {
+        model: selectedModel,
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.3
+      };
+    } else {
+      // OpenAI or ResponsesAI (OpenAI-compatible)
+      apiUrl = provider === "OpenAI" 
+        ? "https://api.openai.com/v1/chat/completions" 
+        : "https://api.responses.ai/v1/chat/completions";
+      
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      body = {
         model: selectedModel,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -135,15 +154,32 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
         ],
         temperature: 0.3,
         response_format: { type: "json_object" }
-      })
+      };
+    }
+
+    console.log(`[AI] 요청 시작: ${apiUrl}`);
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
-      throw new Error(`AI API 호출 실패: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`AI API Error Response (${provider}):`, errorText);
+      throw new Error(`AI API 호출 실패 (${provider}): ${response.status} ${response.statusText}`);
     }
 
     const aiResult = await response.json();
-    const aiResponse: PBSAnalysisResult = JSON.parse(aiResult.choices[0].message.content);
+    let content = "";
+
+    if (provider === "Anthropic") {
+      content = aiResult.content[0].text;
+    } else {
+      content = aiResult.choices[0].message.content;
+    }
+
+    const aiResponse: PBSAnalysisResult = JSON.parse(content);
 
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();
