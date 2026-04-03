@@ -2,6 +2,7 @@
 
 import { getDb } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getDecryptedApiKey } from "@/lib/actions/settings";
 
 // AI 분석을 위한 인터페이스 정의
 interface PBSAnalysisResult {
@@ -111,20 +112,28 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
 위 데이터를 정밀 분석하여 PBS 계획 JSON을 생성하십시오.
 `;
 
-    // Responses API를 통한 gpt-5-mini 호출
+    // 기관별 맞춤형 AI 설정 가져오기 (DB 우선)
+    const customConfig = await getDecryptedApiKey();
+    const apiKey = customConfig?.key || process.env.RESPONSES_API_KEY || "broso_integrated_key";
+    const selectedModel = customConfig?.model || "gpt-5-mini";
+    const provider = customConfig?.provider || "ResponsesAI";
+
+    console.log(`[AI] 실행 모델: ${selectedModel}, 제공자: ${provider}`);
+
+    // Responses API 또는 OpenAI 규격 호출
     const response = await fetch("https://api.responses.ai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.RESPONSES_API_KEY || "broso_integrated_key"}`
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-5-mini",
+        model: selectedModel,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.3, // 과학적 안정성을 위해 낮은 온도로 설정
+        temperature: 0.3,
         response_format: { type: "json_object" }
       })
     });

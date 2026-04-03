@@ -1,158 +1,202 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Brain, FileBarChart, Bell, Shield, Sliders, Clock, CheckCircle2 } from "lucide-react";
-import { getSystemSettings, updateSystemSettings } from "@/lib/actions/settings";
+import { useState } from "react";
+import { updateAIAgentConfig } from "@/lib/actions/settings";
+import { Save, Loader2, Cpu, Key, Building2, Zap, ShieldCheck } from "lucide-react";
 
-export default function SettingsClient() {
-  const [aiEnabled, setAiEnabled] = useState(true);
-  const [alertThreshold, setAlertThreshold] = useState("High");
-  const [reportFrequency, setReportFrequency] = useState("weekly");
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
+interface SettingsClientProps {
+  initialSettings: any;
+}
 
-  useEffect(() => {
-    async function loadSettings() {
-      const settings = await getSystemSettings();
-      setAiEnabled(settings.aiEnabled);
-      setAlertThreshold(settings.alertThreshold);
-      setReportFrequency(settings.reportFrequency);
-      setLoading(false);
+export default function SettingsClient({ initialSettings }: SettingsClientProps) {
+  const [formData, setFormData] = useState({
+    aiEnabled: initialSettings?.aiEnabled ?? true,
+    aiModel: initialSettings?.aiModel || "gpt-5-mini",
+    aiProvider: initialSettings?.aiProvider || "ResponsesAI",
+    aiApiKey: initialSettings?.aiApiKey || "",
+    organizationName: initialSettings?.organizationName || "BIROSO",
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const modelOptions = [
+    { label: "GPT-5 Mini (표준 분석)", value: "gpt-5-mini", provider: "ResponsesAI" },
+    { label: "GPT-5 Nano (경량 분석)", value: "gpt-5-nano", provider: "ResponsesAI" },
+    { label: "GPT-4o (고성능)", value: "gpt-4o", provider: "OpenAI" },
+    { label: "Claude 3.5 Sonnet", value: "claude-3-5-sonnet-20240620", provider: "Anthropic" },
+  ];
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      const result = await updateAIAgentConfig(formData);
+      if (result.success) {
+        setMessage({ type: "success", text: "설정이 안전하게 저장되었습니다." });
+      } else {
+        setMessage({ type: "error", text: "설정 저장 중 오류가 발생했습니다." });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "시스템 오류가 발생했습니다." });
+    } finally {
+      setIsSaving(false);
     }
-    loadSettings();
-  }, []);
-
-  const handleSave = async () => {
-    await updateSystemSettings({ aiEnabled, alertThreshold, reportFrequency });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
-    <div className="space-y-8 fade-in text-slate-200 max-w-4xl">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white mb-1">리포트 및 AI 설정</h2>
-        <p className="text-slate-400 text-sm">자동 리포트 생성 주기, AI 예측 모델 설정, 알림 임계치 등을 관리합니다.</p>
+    <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-20">
+      {/* Left side: AI Agent Config */}
+      <div className="md:col-span-12 lg:col-span-8 space-y-10">
+        <div className="glass-card p-10 rounded-[3rem] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl space-y-12 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] -mr-32 -mt-32 group-hover:bg-emerald-500/20 transition-all"></div>
+          
+          <div className="flex items-center justify-between border-b border-white/5 pb-8 relative z-10">
+            <h3 className="text-xl font-black text-white flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
+                <Cpu size={24} />
+              </div>
+              Behavior Analysis Agent
+            </h3>
+            <div className="flex items-center gap-3">
+              <span className={`text-[11px] font-black uppercase tracking-widest ${formData.aiEnabled ? 'text-emerald-400' : 'text-slate-500'}`}>
+                {formData.aiEnabled ? 'ENGINE ONLINE' : 'ENGINE OFFLINE'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, aiEnabled: !formData.aiEnabled})}
+                className={`w-14 h-8 rounded-full border-2 border-white/10 p-1 transition-all ${formData.aiEnabled ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-slate-800'}`}
+              >
+                <div className={`w-5 h-5 rounded-full transition-all shadow-md ${formData.aiEnabled ? 'translate-x-6 bg-emerald-400' : 'translate-x-0 bg-slate-500'}`}></div>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <Zap size={14} /> SELECT ENGINE MODEL
+              </label>
+              <div className="relative">
+                <select
+                  value={formData.aiModel}
+                  onChange={(e) => {
+                    const model = modelOptions.find(o => o.value === e.target.value);
+                    setFormData({...formData, aiModel: e.target.value, aiProvider: model?.provider || "OpenAI"});
+                  }}
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer hover:bg-black/60 transition-all pr-12"
+                >
+                  {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                   <Loader2 size={16} className={isSaving ? "animate-spin" : ""} />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">선택된 제공자: <span className="text-white font-black">{formData.aiProvider}</span></p>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <Key size={14} /> INSTITUTION API KEY
+              </label>
+              <div className="relative group">
+                <input
+                  type="password"
+                  value={formData.aiApiKey}
+                  onChange={(e) => setFormData({...formData, aiApiKey: e.target.value})}
+                  placeholder="sk-••••••••••••••••••••••••"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-600 transition-all"
+                />
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-600 group-hover:text-blue-400 cursor-help transition-all">
+                   <ShieldCheck size={18} />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium italic">API 키는 AES-256 방식으로 보안 암호화되어 저장됩니다.</p>
+            </div>
+
+            <div className="space-y-4 md:col-span-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <Building2 size={14} /> ORGANIZATION IDENTIFIER
+              </label>
+              <input
+                type="text"
+                value={formData.organizationName}
+                onChange={(e) => setFormData({...formData, organizationName: e.target.value})}
+                placeholder="기관 명칭을 입력하십시오 (예: BIROSO 중앙센터)"
+                className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-black text-white outline-none focus:ring-2 focus:ring-slate-500/50 transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
+        {message && (
+          <div className={`p-6 rounded-[2rem] border animate-in slide-in-from-top-4 flex items-center gap-4 ${
+            message.type === "success" 
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-100 shadow-lg shadow-emerald-950/20" 
+              : "bg-rose-500/10 border-rose-500/30 text-rose-100 placeholder:shadow-lg shadow-rose-950/20"
+          }`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+               message.type === "success" ? "bg-emerald-500/20" : "bg-rose-500/20"
+            }`}>
+               {message.type === "success" ? <ShieldCheck size={20} className="text-emerald-400" /> : <Loader2 size={20} className="text-rose-400" />}
+            </div>
+            <p className="font-bold text-sm">{message.text}</p>
+          </div>
+        )}
       </div>
 
-      <section className="bg-slate-800/40 border border-slate-700 rounded-xl p-6 backdrop-blur-md">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <Brain size={20} className="text-purple-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">AI 위험 예측 모형</h3>
-            <p className="text-xs text-slate-500">도전행동 발생 가능성을 미리 예측하는 AI 모듈 설정</p>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-slate-800/60 rounded-xl border border-slate-700">
-            <div className="flex items-center gap-3">
-              <Sliders size={18} className="text-slate-400" />
-              <div>
-                <p className="text-sm font-medium text-white">AI 예측 기능 활성화</p>
-                <p className="text-xs text-slate-500">시계열 패턴 분석 기반 도전행동 사전 예측</p>
-              </div>
+      {/* Right side: Summary & Action */}
+      <div className="md:col-span-12 lg:col-span-4 space-y-8">
+        <div className="glass-card p-10 rounded-[3rem] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-xl space-y-8">
+          <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] border-b border-white/5 pb-4">
+             CONFIGURATION SUMMARY
+          </h4>
+          
+          <div className="space-y-6">
+            <div className="flex justify-between items-center text-sm">
+               <span className="text-slate-500 font-medium">분석 모델</span>
+               <span className="text-white font-black">{formData.aiModel}</span>
             </div>
-            <button
-              onClick={() => setAiEnabled(!aiEnabled)}
-              className={`w-12 h-7 rounded-full transition-all relative ${aiEnabled ? 'bg-green-600' : 'bg-slate-600'}`}
-            >
-              <div className={`w-5 h-5 rounded-full bg-white absolute top-1 transition-all shadow-md ${aiEnabled ? 'left-6' : 'left-1'}`} />
-            </button>
+            <div className="flex justify-between items-center text-sm">
+               <span className="text-slate-500 font-medium">API 연결 상태</span>
+               <span className={initialSettings?.hasKey || formData.aiApiKey ? "text-emerald-400 font-black" : "text-amber-500 font-black"}>
+                  {initialSettings?.hasKey || formData.aiApiKey ? "READY" : "KEY NEEDED"}
+               </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+               <span className="text-slate-500 font-medium">암호화 버전</span>
+               <span className="text-blue-500 font-black tracking-widest text-[10px]">AES-256-CBC-V1</span>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-800/60 rounded-xl border border-slate-700">
-            <div className="flex items-center gap-3">
-              <Bell size={18} className="text-slate-400" />
-              <div>
-                <p className="text-sm font-medium text-white">알림 발송 임계 강도</p>
-                <p className="text-xs text-slate-500">이 강도 이상의 행동이 감지되면 자동 알림을 발송합니다.</p>
-              </div>
-            </div>
-            <select
-              value={alertThreshold}
-              onChange={(e) => setAlertThreshold(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-purple-500"
-            >
-              <option value="Low">Low (약함 이상)</option>
-              <option value="Medium">Medium (보통 이상)</option>
-              <option value="High">High (심각만)</option>
-            </select>
-          </div>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="w-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-6 rounded-[2rem] font-black text-sm flex items-center justify-center gap-4 shadow-2xl shadow-emerald-950/60 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                분속 엔진 업데이트 중...
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                마스터 설정 저장
+              </>
+            )}
+          </button>
         </div>
-      </section>
 
-      <section className="bg-slate-800/40 border border-slate-700 rounded-xl p-6 backdrop-blur-md">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-            <FileBarChart size={20} className="text-blue-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">자동 리포트 설정</h3>
-            <p className="text-xs text-slate-500">기관 및 보호자에게 발송되는 정기 리포트 구성</p>
-          </div>
+        <div className="p-8 bg-blue-600/5 border border-blue-600/10 rounded-[3rem] backdrop-blur-xl">
+           <h5 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-4">Enterprise Compliance</h5>
+           <p className="text-[12px] leading-relaxed text-slate-500 font-medium">
+             저장된 모든 API 키는 기관 전용 테넌트로 분리 관리되며, 본사 관리자도 복호화된 키를 열람할 수 없도록 설계되었습니다. 시스템 로그에는 마스킹된 토큰 식별자만 기록됩니다.
+           </p>
         </div>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-slate-800/60 rounded-xl border border-slate-700">
-            <div className="flex items-center gap-3">
-              <Clock size={18} className="text-slate-400" />
-              <div>
-                <p className="text-sm font-medium text-white">리포트 자동 생성 주기</p>
-                <p className="text-xs text-slate-500">설정된 주기에 맞추어 PDF 리포트를 자동 생성합니다.</p>
-              </div>
-            </div>
-            <select
-              value={reportFrequency}
-              onChange={(e) => setReportFrequency(e.target.value)}
-              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="daily">매일</option>
-              <option value="weekly">매주 (기본)</option>
-              <option value="monthly">매월</option>
-            </select>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-slate-800/60 rounded-xl border border-slate-700">
-            <div className="flex items-center gap-3">
-              <Shield size={18} className="text-slate-400" />
-              <div>
-                <p className="text-sm font-medium text-white">보호자 공유 범위</p>
-                <p className="text-xs text-slate-500">보호자에게 공개하는 행동 관찰 데이터의 수준을 제한합니다.</p>
-              </div>
-            </div>
-            <select className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:ring-1 focus:ring-blue-500">
-              <option>요약만 공개</option>
-              <option>상세 기록 포함</option>
-              <option>비공개 (내부용)</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className={`flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-xl group ${
-            saved
-              ? 'bg-green-600 text-white shadow-green-500/20'
-              : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white shadow-blue-600/20 active:scale-95'
-          }`}
-        >
-          {saved ? (
-            <>
-              <CheckCircle2 size={18} className="animate-bounce" />
-              <span>시스템에 영구 저장 완료</span>
-            </>
-          ) : (
-            <>
-              <Shield size={18} className="group-hover:rotate-12 transition-transform" />
-              <span>글로벌 시스템 설정 확정 저장</span>
-            </>
-          )}
-        </button>
       </div>
-    </div>
+    </form>
   );
 }

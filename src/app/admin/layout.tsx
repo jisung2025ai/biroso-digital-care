@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "식사/건강 전체 기록", href: "/admin/daily-reports", icon: <Database size={20} />, allow: ["ADMIN", "STAFF"] },
     { name: "PBS 지원계획 관리", href: "/admin/pbs", icon: <Zap size={20} className="text-yellow-400" />, allow: ["ADMIN", "STAFF"] },
     { name: "기관/이용자 관리", href: "/admin/users", icon: <User size={20} />, allow: ["ADMIN", "STAFF"] },
-    { name: "리포트 및 AI 설정", href: "/admin/settings", icon: <Settings size={20} />, allow: ["ADMIN"] },
+    { name: "리포트 및 AI 설정", href: "/admin/settings", icon: <Settings size={20} />, allow: ["ADMIN", "STAFF"] },
   ].filter(item => !role || item.allow.includes(role));
 
   return (

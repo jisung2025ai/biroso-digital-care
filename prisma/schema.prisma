@@ -103,6 +103,10 @@ model CarePlan {
 model SystemSetting {
   id              String   @id @default("GLOBAL_CONFIG")
   aiEnabled       Boolean  @default(true)
+  aiApiKey        String?  // 암호화된 API 키
+  aiModel         String   @default("gpt-5-mini")
+  aiProvider      String   @default("ResponsesAI")
+  organizationName String? @default("BIROSO 중앙센터")
   alertThreshold  String   @default("Medium") // "Low", "Medium", "High"
   reportFrequency String   @default("weekly") // "daily", "weekly", "monthly"
   
