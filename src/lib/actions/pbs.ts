@@ -196,7 +196,26 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
       content = aiResult.choices[0].message.content;
     }
 
-    const aiResponse: PBSAnalysisResult = JSON.parse(content);
+    // JSON 파싱 전 정제 로직 추가 (Bad control character 및 비정형 출력 대응)
+    let cleanedContent = content.trim();
+    
+    // 1. JSON 객체 추출 (첫 번째 { 와 마지막 } 사이만 사용)
+    const jsonStart = cleanedContent.indexOf("{");
+    const jsonEnd = cleanedContent.lastIndexOf("}");
+    
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      cleanedContent = cleanedContent.substring(jsonStart, jsonEnd + 1);
+    }
+
+    // 2. JSON 문자열 내의 비정상적인 제어 문자(실제 줄바꿈 등)를 이스케이프 처리
+    cleanedContent = cleanedContent.replace(/[\u0000-\u001F]+/g, (match) => {
+      if (match === "\n") return "\\n";
+      if (match === "\r") return "\\r";
+      if (match === "\t") return "\\t";
+      return "";
+    });
+
+    const aiResponse: PBSAnalysisResult = JSON.parse(cleanedContent);
 
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();
