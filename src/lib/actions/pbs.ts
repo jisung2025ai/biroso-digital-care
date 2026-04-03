@@ -66,18 +66,75 @@ export async function generatePBSPlan(patientId: string, specificBehavior?: stri
     const behaviorTitle = specificBehavior || (Object.entries(behaviorCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "전반적 도전행동");
 
     // 3. gpt-5-mini 호출 (Responses API 패턴 가이드 준수)
-    console.log("AI PBS Analysis Started for Patient:", patient.name);
+    console.log(`[AI] PBS 심층 분석 시작: ${patient.name} (${behaviorTitle})`);
     
-    // [시스템 규칙 준수] gpt-5-mini 사용 시 시뮬레이션된 결과 또는 실제 fetch 연동
-    // 여기서는 실제 서비스 흐름 및 유아교육 현장 중심의 정교한 분석 결과를 반환하도록 설정합니다.
-    const aiResponse: PBSAnalysisResult = {
-      functionAnalyzed: recentABC.length > 0 ? "회피하기(Escape), 관심추구(Attention)" : "정보 부족",
-      antecedentStrategy: "• 환경 구성: 전이 시간(예: 자유선택활동에서 정리 시간으로 넘어갈 때) 5분 전 미리 시각적 타이머와 그림 카드로 예고하기\n• 예방적 선택권: '활동을 안 할래'가 아니라 '블록 먼저 정리할래, 색연필 먼저 정리할래?' 와 같이 통제감을 주는 두 가지 대안 제시",
-      replacementSkill: "• 의사소통 대체: 소리를 지르는 대신 '도와주세요' 그림 카드(AAC)를 교사에게 건네도록 반복 교수\n• 감정 조절: 짜증이 날 때 '휴식 영역(Rest Area)'을 손가락으로 가리키고 스스로 이동하여 3분간 교구 없이 쉬는 연습 가르치기",
-      consequenceStrategy: "• 부적절한 행동 시: 물건을 던질 경우, 반응(눈맞춤, 잔소리)을 최소화하고 즉각 위험물질 물리적으로 제거\n• 대체 행동 성공 시: 카드를 사용해 의사 표현 시 즉각적인 사회적 칭찬(\"기다려줘서 정말 고마워!\") 및 유아가 좋아하는 강화물(예: 비눗방울 1분) 즉시 제공",
-      longTermSupport: "• 생리적 지원: 식사량이 적거나 수면 질이 떨어지는 패턴을 파악하여, 해당 요일에는 대근육 활동 대신 차분한 소근육 활동(점토 놀이 등)으로 활동 난이도 조절\n• 또래 관계 연계: 통합학급 또래 도우미 친구를 지정하여 긍정적인 사회적 상호작용 모델링 환경을 장기적으로 노출",
-      interventions: "[위해 행동 발생 시 위기 관리 프로세스]\n1. 발생 확인 즉시 주변 유아 대피 및 특수교사 개입\n2. 물리적 차단용 매트를 활용해 모서리 등에서 안전 확보\n3. 5분 이상 진정되지 않거나 상해가 우려되는 경우, 원장 및 학부모 즉각 연락 후 귀가/병원 연계 검토"
-    };
+    const SYSTEM_PROMPT = `
+귀하는 대한민국 최고의 최중증 발달장애인 행동지원 전문가이자 응용행동분석(ABA) 과학자입니다.
+제공된 이용자의 최근 10일간의 '도전행동 기록(ABC)'과 '일상 건강 기록(식사, 수면, 기분)'을 융합 분석하여, 
+도전행동의 기능을 과학적으로 가설화하고 이에 기반한 '긍정적 행동지원계획(PBS)'을 수립하십시오.
+
+[작성 가이드라인]
+1. 기능 분석(functionAnalyzed): ABC 데이터를 바탕으로 행동의 기능(관심, 회피, 획득, 자극 등)을 명확히 정의하십시오.
+2. 선행사건 중재(antecedentStrategy): 행동 발생 전 환경적, 생리적 트리거를 통제하거나 예방하는 구체적인 절차를 제언하십시오. 
+3. 대체기술 교수(replacementSkill): 도전행동을 대체할 수 있는 기능적 의사소통 기술(FCT)이나 적응적 기술을 명시하십시오.
+4. 후속결과 중재(consequenceStrategy): 행동 발생 시 반응(Reaction)을 최소화하고, 대체 행동 성공 시의 강력한 강화(Reinforcement) 방안을 제시하십시오.
+5. 장기적인 지원(longTermSupport): 이용자의 삶의 질(QoL) 향상을 위한 라이프스타일 조정 및 생리적/심리적 지원 방안을 포함하십시오.
+6. 위기관리(interventions): 위해(자해/타해) 발생 시의 안전 확보 및 즉각적 중재 매뉴얼을 작성하십시오.
+
+[출력 형식]
+반드시 다음 구조의 JSON 형식으로만 응답하십시오:
+{
+  "functionAnalyzed": "분석된 기능 (예: 자극추구)",
+  "antecedentStrategy": "선행사건 중재 상세 내용 (글머리 기호 사용)",
+  "replacementSkill": "대체기술 교수 상세 내용 (글머리 기호 사용)",
+  "consequenceStrategy": "후속결과 중재 상세 내용 (글머리 기호 사용)",
+  "longTermSupport": "장기적 지원 상세 내용 (글머리 기호 사용)",
+  "interventions": "[위기 관리 프로세스] 1. .. 2. .."
+}
+`;
+
+    const userPrompt = `
+[이용자 정보]
+- 성명: ${patient.name}
+- 장애유형: ${patient.disabilityType || "정보 없음"}
+- 건강정보: ${patient.healthInfo || "특이사항 없음"}
+
+[분석 대상 행동]
+- 대상 유형: ${behaviorTitle}
+
+[최근 도전행동 기록(ABC)]
+${JSON.stringify(dataContext.abcRecords, null, 2)}
+
+[최근 일상 건강 현황]
+${JSON.stringify(dataContext.dailyStatus, null, 2)}
+
+위 데이터를 정밀 분석하여 PBS 계획 JSON을 생성하십시오.
+`;
+
+    // Responses API를 통한 gpt-5-mini 호출
+    const response = await fetch("https://api.responses.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.RESPONSES_API_KEY || "broso_integrated_key"}`
+      },
+      body: JSON.stringify({
+        model: "gpt-5-mini",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.3, // 과학적 안정성을 위해 낮은 온도로 설정
+        response_format: { type: "json_object" }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI API 호출 실패: ${response.statusText}`);
+    }
+
+    const aiResult = await response.json();
+    const aiResponse: PBSAnalysisResult = JSON.parse(aiResult.choices[0].message.content);
 
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();

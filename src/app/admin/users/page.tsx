@@ -38,11 +38,11 @@ export default async function UsersPage() {
     birthDate: p.birthDate?.toISOString() || "",
     healthInfo: p.healthInfo || "",
     assignedStaffId: p.assignedStaffId || "",
-    guardianId: p.guardianId || "",
-    guardianName: p.guardian?.name || "연결 없음",
+    guardianId: (p as any).guardianId || "",
+    guardianName: (p as any).guardian?.name || "연결 없음",
     createdAt: p.createdAt.toISOString(),
-    staffName: p.assignedStaff?.name || "",
-    behaviorCount: p._count.behaviorRecords
+    staffName: (p as any).assignedStaff?.name || "",
+    behaviorCount: (p as any)._count?.behaviorRecords || 0
   }));
 
   // 종사자 + 보호자 목록 분리 조회 (피보호 이용자 정보 포함)
@@ -62,7 +62,7 @@ export default async function UsersPage() {
       email: u.email,
       role: u.role,
       createdAt: u.createdAt.toISOString(),
-      recordCount: u._count.behaviorRecords
+      recordCount: (u as any)._count?.behaviorRecords || 0
     }))
     .sort((a, b) => b.recordCount - a.recordCount);
 
@@ -75,8 +75,8 @@ export default async function UsersPage() {
       role: u.role,
       createdAt: u.createdAt.toISOString(),
       // 보호자가 담당하는 환자 중 첫 번째 환자 정보를 표시 (현재 1:M 관계)
-      patientName: u.guardedPatients.length > 0 ? u.guardedPatients[0].name : "연결 없음",
-      patientId: u.guardedPatients.length > 0 ? u.guardedPatients[0].id : ""
+      patientName: (u as any).guardedPatients?.length > 0 ? (u as any).guardedPatients[0].name : "연결 없음",
+      patientId: (u as any).guardedPatients?.length > 0 ? (u as any).guardedPatients[0].id : ""
     }));
 
   return (
