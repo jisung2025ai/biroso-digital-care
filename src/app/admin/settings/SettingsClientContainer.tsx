@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { updateAIAgentConfig } from "@/lib/actions/settings";
-import { Save, Loader2, Cpu, Key, Building2, Zap, ShieldCheck } from "lucide-react";
+import { Save, Loader2, Database, Key, Home, Zap, CheckCircle } from "lucide-react";
 
 interface SettingsClientProps {
   initialSettings: any;
 }
 
 export default function SettingsClient({ initialSettings }: SettingsClientProps) {
+  console.log("[Settings] Rendering client with settings:", initialSettings);
   const [formData, setFormData] = useState({
     aiEnabled: initialSettings?.aiEnabled ?? true,
     aiModel: initialSettings?.aiModel || "gpt-5-mini",
@@ -56,7 +57,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
           <div className="flex items-center justify-between border-b border-white/5 pb-8 relative z-10">
             <h3 className="text-xl font-black text-white flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
-                <Cpu size={24} />
+                <Database size={24} />
               </div>
               Behavior Analysis Agent
             </h3>
@@ -110,7 +111,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
                   className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-600 transition-all"
                 />
                 <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-600 group-hover:text-blue-400 cursor-help transition-all">
-                   <ShieldCheck size={18} />
+                   <CheckCircle size={18} />
                 </div>
               </div>
               <p className="text-[11px] text-slate-500 font-medium italic">API 키는 AES-256 방식으로 보안 암호화되어 저장됩니다.</p>
@@ -118,7 +119,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
 
             <div className="space-y-4 md:col-span-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                 <Building2 size={14} /> ORGANIZATION IDENTIFIER
+                 <Home size={14} /> ORGANIZATION IDENTIFIER
               </label>
               <input
                 type="text"
@@ -140,7 +141,7 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                message.type === "success" ? "bg-emerald-500/20" : "bg-rose-500/20"
             }`}>
-               {message.type === "success" ? <ShieldCheck size={20} className="text-emerald-400" /> : <Loader2 size={20} className="text-rose-400" />}
+               {message.type === "success" ? <CheckCircle size={20} className="text-emerald-400" /> : <Loader2 size={20} className="text-rose-400" />}
             </div>
             <p className="font-bold text-sm">{message.text}</p>
           </div>
