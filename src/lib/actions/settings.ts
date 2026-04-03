@@ -103,7 +103,7 @@ export async function updateAIAgentConfig(data: {
     
     // 새 키가 입력되었고 마스킹된 값이 아니면 암호화
     if (data.aiApiKey && !data.aiApiKey.includes("••••••••")) {
-      encryptedKey = encrypt(data.aiApiKey);
+      encryptedKey = encrypt(data.aiApiKey.trim());
     }
 
     await (db as any).systemSetting.upsert({

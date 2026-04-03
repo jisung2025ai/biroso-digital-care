@@ -114,11 +114,27 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
 
     // 기관별 맞춤형 AI 설정 가져오기 (DB 우선)
     const customConfig = await getDecryptedApiKey();
-    const apiKey = customConfig?.key || process.env.RESPONSES_API_KEY || "broso_integrated_key";
-    const selectedModel = customConfig?.model || "gpt-5-mini";
     const provider = customConfig?.provider || "ResponsesAI";
+    const selectedModel = customConfig?.model || "gpt-5-mini";
+    
+    // 프로바이더별 적합한 API 키 결정
+    let apiKey = customConfig?.key;
+    
+    if (!apiKey) {
+      if (provider === "ResponsesAI") {
+        apiKey = process.env.RESPONSES_API_KEY || "broso_integrated_key";
+      } else if (provider === "OpenAI") {
+        apiKey = process.env.OPENAI_API_KEY; // 서버측 환경변수 fallback
+      } else if (provider === "Anthropic") {
+        apiKey = process.env.ANTHROPIC_API_KEY; // 서버측 환경변수 fallback
+      }
+    }
 
-    console.log(`[AI] 실행 모델: ${selectedModel}, 제공자: ${provider}`);
+    if (!apiKey) {
+      throw new Error(`${provider} API 키가 설정되지 않았습니다. 관리자 설정에서 키를 입력해주세요.`);
+    }
+
+    console.log(`[AI] 실행 모델: ${selectedModel}, 제공자: ${provider}, 키 검증: ${apiKey.slice(0, 5)}...`);
 
     let apiUrl = "https://api.responses.ai/v1/chat/completions";
     let headers: Record<string, string> = {
