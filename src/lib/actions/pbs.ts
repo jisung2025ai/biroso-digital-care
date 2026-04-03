@@ -83,7 +83,10 @@ export async function generatePBSPlan(patientId: string, specificBehavior?: stri
 6. 위기관리(interventions): 위해(자해/타해) 발생 시의 안전 확보 및 즉각적 중재 매뉴얼을 작성하십시오.
 
 [출력 형식]
-반드시 다음 구조의 JSON 형식으로만 응답하십시오:
+반드시 다음 구조의 순수한 JSON 객체만을 응답하십시오. (절대 설명이나 인사말을 포함하지 마십시오):
+1. 모든 키(Key)와 값(Value)은 반드시 **큰따옴표(")만을 사용**하십시오. (작은따옴표 ' 사용 금지)
+2. JSON 객체 외의 다른 텍스트는 응답에 포함하지 마십시오.
+
 {
   "functionAnalyzed": "분석된 기능 (예: 자극추구)",
   "antecedentStrategy": "선행사건 중재 상세 내용 (글머리 기호 사용)",
@@ -215,7 +218,14 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
       return "";
     });
 
-    const aiResponse: PBSAnalysisResult = JSON.parse(cleanedContent);
+    let aiResponse: PBSAnalysisResult;
+    try {
+      aiResponse = JSON.parse(cleanedContent);
+    } catch (parseError: any) {
+      console.error("JSON Parse Error. Cleaned Content snippet:", cleanedContent.slice(0, 100));
+      // 사용자에게 문제를 더 구체적으로 알림
+      throw new Error(`분석 결과 해석 실패: ${parseError.message}. (응답 시작: ${cleanedContent.slice(0, 40)}...)`);
+    }
 
     const newId = crypto.randomUUID();
     const now = new Date().toISOString();
