@@ -128,3 +128,40 @@ export async function getDecryptedApiKey() {
     provider: setting.aiProvider
   };
 }
+
+/**
+ * 개별 사용자의 설정을 조회합니다.
+ */
+export async function getUserSettings(userId: string) {
+  const db = getDb();
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        notificationsEnabled: true,
+        darkMode: true
+      }
+    });
+    return user || { notificationsEnabled: true, darkMode: false };
+  } catch (err) {
+    console.error("Get user settings error:", err);
+    return { notificationsEnabled: true, darkMode: false };
+  }
+}
+
+/**
+ * 개별 사용자의 설정을 업데이트합니다.
+ */
+export async function updateUserSettings(userId: string, data: { notificationsEnabled?: boolean; darkMode?: boolean }) {
+  const db = getDb();
+  try {
+    await db.user.update({
+      where: { id: userId },
+      data
+    });
+    return { success: true };
+  } catch (err) {
+    console.error("Update user settings error:", err);
+    return { success: false };
+  }
+}
