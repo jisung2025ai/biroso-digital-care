@@ -88,11 +88,11 @@ export async function generatePBSPlan(patientId: string, specificBehavior?: stri
 5. 장기적인 지원(longTermSupport): 유아의 전인적 발달(정서, 사회성, 자립)과 가정-기관 간의 연계 지원 방안을 포함하십시오.
 6. 위기관리(interventions): 위해 발생 시 유아의 안전을 최우선으로 하는 비강압적 중재 절차와 정서적 진정 프로세스를 작성하십시오.
 
-[출력 형식]
-반드시 다음 구조의 순춘한 JSON 객체만을 응답하십시오. (절대 설명이나 인사말을 포함하지 마십시오):
-1. 모든 키(Key)와 값(Value)은 순수한 문자열로 작성하며, 큰따옴표(")만을 사용하십시오.
-2. functionAnalyzed 필드는 반드시 선택한 표준 분류 키워드로 시작해야 합니다. (예: "[회피하기] 분석 내용...")
-3. 각 필드(Value)는 유아교육 현장에서 바로 활용할 수 있도록 아주 **풍성하고 구체적인 문장(Bullet point 포함 가능)**으로 작성하십시오.
+[출력 형식 및 주의사항 - 절대 준수]
+1. **반드시 순수한 JSON 객체만을 응답하십시오.** (설명, 인사말, 마크다운 코드 블록 금지)
+2. 모든 키(Key)는 큰따옴표(")로 감싸야 하며, **각 라인의 시작 부분이나 필드명 앞에 하이픈(-), 점(.), 불렛 포인트, 소제목 등을 절대 붙이지 마십시오.**
+3. 모든 값(Value)은 큰따옴표(")만을 사용한 하나의 문자열로 작성하십시오.
+4. 각 필드(Value)는 아주 **풍성하고 구체적인 문장(Bullet point 포함 가능)**으로 작성하되, 문자열 내부에서 따옴표를 사용할 경우 반드시 이스케이프(\") 하십시오.
 
 {
   "functionAnalyzed": "[선택한 기능분류] 분석된 기능 및 유아기적 욕구 분석 (풍성하게)",
@@ -206,7 +206,7 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
       content = aiResult.choices[0].message.content;
     }
 
-    // JSON 파싱 전 정제 로직 추가 (Bad control character 및 비정형 출력 대응)
+    // JSON 파싱 전 강력한 정제 및 복구 로직
     let cleanedContent = content.trim();
     
     // 1. JSON 객체 추출 (첫 번째 { 와 마지막 } 사이만 사용)
@@ -217,8 +217,18 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
       cleanedContent = cleanedContent.substring(jsonStart, jsonEnd + 1);
     }
 
-    // 2. JSON 문자열 값 내부의 실제 줄바꿈 및 제어 문자만 정밀하게 이스케이프 (Bad control character 방지)
-    // 큰따옴표(") 사이의 내용물 중 제어 문자만 찾아 변환함
+    // 2. 따옴표 외부에 존재하는 불법적 문자(하이픈 불렛 포인트 등) 제거
+    // 특히 각 필드 시작 부분의 하이픈(-)을 제거함
+    cleanedContent = cleanedContent.split('\n').map(line => {
+      const trimmed = line.trim();
+      // 줄이 하이픈이나 점 등으로 시작하고 뒤에 따옴표가 오면 접두어 제거 시도
+      if (/^[-.*•]\s*"/.test(trimmed)) {
+        return line.replace(/^(\s*)[-.*•]\s*"/, '$1"');
+      }
+      return line;
+    }).join('\n');
+
+    // 3. JSON 문자열 값 내부의 실제 줄바꿈 및 제어 문자만 정밀하게 이스케이프
     cleanedContent = cleanedContent.replace(/"((?:[^"\\]|\\.)*)"/g, (match, p1) => {
       return '"' + p1.replace(/\n/g, '\\n')
                     .replace(/\r/g, '\\r')
@@ -226,13 +236,17 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
                     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "") + '"';
     });
 
+    // 4. 마지막 필드 뒤의 콤마(Trailing Comma)가 있는 경우 제거 (가장 빈번한 문법 오류)
+    cleanedContent = cleanedContent.replace(/,\s*}/g, '}');
+
     let aiResponse: PBSAnalysisResult;
     try {
       aiResponse = JSON.parse(cleanedContent);
     } catch (parseError: any) {
-      console.error("JSON Parse Error. Cleaned Content snippet:", cleanedContent.slice(0, 100));
-      // 사용자에게 문제를 더 구체적으로 알림
-      throw new Error(`분석 결과 해석 실패: ${parseError.message}. (응답 시작: ${cleanedContent.slice(0, 40)}...)`);
+      console.error("JSON Parse Error. Full Body Preview:", content.slice(0, 300));
+      console.error("Cleaned Content snippet:", cleanedContent.slice(0, 300));
+      // 에러 메시지에 응답의 일부를 포함하여 관리자가 즉시 문제를 시각화할 수 있도록 함
+      throw new Error(`분석 결과 해석 실패: ${parseError.message}.\n[응답 분석]: ${cleanedContent.slice(0, 150)}...`);
     }
 
     const newId = crypto.randomUUID();

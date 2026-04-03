@@ -21,19 +21,19 @@ interface RecordItem {
 
 export default function RecordsClient({ 
   initialRecords, 
-  currentDate 
+  currentMonth 
 }: { 
   initialRecords: RecordItem[];
-  currentDate: string;
+  currentMonth: string;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  // 날짜 변경 핸들러
-  const handleDateChange = (newDate: string) => {
+  // 월 변경 핸들러
+  const handleMonthChange = (newMonth: string) => {
     startTransition(() => {
-      router.push(`/admin/records?date=${newDate}`, { scroll: false });
+      router.push(`/admin/records?month=${newMonth}`, { scroll: false });
     });
   };
 
@@ -50,7 +50,7 @@ export default function RecordsClient({
             도전행동 전체 기록 <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full ml-2">Live DB</span>
           </h2>
           <p className="text-slate-400 text-sm">
-            {currentDate} 기준 현장에서 전송된 실시간 ABC 기록 리스트입니다.
+            {currentMonth} 기준 현장에서 전송된 실시간 ABC 기록 리스트입니다.
           </p>
         </div>
         
@@ -61,9 +61,9 @@ export default function RecordsClient({
               <Calendar size={18} />
             </div>
             <input 
-              type="date"
-              value={currentDate}
-              onChange={(e) => handleDateChange(e.target.value)}
+              type="month"
+              value={currentMonth}
+              onChange={(e) => handleMonthChange(e.target.value)}
               className="bg-slate-800 border border-slate-700 hover:border-blue-500 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
             />
           </div>
@@ -164,7 +164,7 @@ export default function RecordsClient({
                   <td colSpan={8} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-2 text-slate-600">
                       <Calendar size={32} strokeWidth={1} />
-                      <p className="text-sm italic">선택하신 날짜({currentDate})에 기록된 데이터가 없습니다.</p>
+                      <p className="text-sm italic">선택하신 월({currentMonth})에 기록된 데이터가 없습니다.</p>
                     </div>
                   </td>
                 </tr>

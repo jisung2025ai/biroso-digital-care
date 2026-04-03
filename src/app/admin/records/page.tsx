@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  searchParams: { date?: string };
+  searchParams: { month?: string };
 }
 
 export default async function RecordsPage({ searchParams }: Props) {
@@ -14,13 +14,14 @@ export default async function RecordsPage({ searchParams }: Props) {
   const userRole = (session?.user as any)?.role;
   const userId = (session?.user as any)?.id;
 
-  // 1. 날짜 결정 (기본값: 오늘)
+  // 1. 월 결정 (기본값: 현재 월)
   const today = new Date();
-  const dateStr = searchParams.date || today.toISOString().split('T')[0];
+  const currentMonthStr = searchParams.month || `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   
-  // 2. 해당 날짜의 시작과 끝 계산 (지역 시각 기준 대응)
-  const startDate = new Date(`${dateStr}T00:00:00`);
-  const endDate = new Date(`${dateStr}T23:59:59`);
+  // 2. 해당 월의 시작(1일)과 끝(말일) 계산
+  const [year, month] = currentMonthStr.split('-').map(Number);
+  const startDate = new Date(year, month - 1, 1, 0, 0, 0);
+  const endDate = new Date(year, month, 0, 23, 59, 59); // month월 0일은 month-1월의 마지막 날
 
   const db = getDb();
   
@@ -71,5 +72,5 @@ export default async function RecordsPage({ searchParams }: Props) {
     };
   });
 
-  return <RecordsClient initialRecords={formattedRecords} currentDate={dateStr} />;
+  return <RecordsClient initialRecords={formattedRecords} currentMonth={currentMonthStr} />;
 }
