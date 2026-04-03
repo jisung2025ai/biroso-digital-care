@@ -25,7 +25,8 @@ export default function SettingsClient({ initialSettings }: SettingsClientProps)
     { label: "GPT-5 Mini (표준 분석)", value: "gpt-5-mini", provider: "ResponsesAI" },
     { label: "GPT-5 Nano (경량 분석)", value: "gpt-5-nano", provider: "ResponsesAI" },
     { label: "GPT-4o (고성능)", value: "gpt-4o", provider: "OpenAI" },
-    { label: "Claude 3.5 Sonnet (최신)", value: "claude-3-5-sonnet-20241022", provider: "Anthropic" },
+    { label: "Claude 3.5 Sonnet (고성능)", value: "claude-3-5-sonnet-20241022", provider: "Anthropic" },
+    { label: "Claude 3 Haiku (보급형/호환성)", value: "claude-3-haiku-20240307", provider: "Anthropic" },
   ];
 
   const handleSave = async (e: React.FormEvent) => {
