@@ -210,13 +210,8 @@ ${JSON.stringify(dataContext.dailyStatus, null, 2)}
       cleanedContent = cleanedContent.substring(jsonStart, jsonEnd + 1);
     }
 
-    // 2. JSON 문자열 내의 비정상적인 제어 문자(실제 줄바꿈 등)를 이스케이프 처리
-    cleanedContent = cleanedContent.replace(/[\u0000-\u001F]+/g, (match) => {
-      if (match === "\n") return "\\n";
-      if (match === "\r") return "\\r";
-      if (match === "\t") return "\\t";
-      return "";
-    });
+    // 2. JSON 문자열 내의 유효하지 않은 제어 문자만 제거 (표준 줄바꿈/탭은 유지)
+    cleanedContent = cleanedContent.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]+/g, "");
 
     let aiResponse: PBSAnalysisResult;
     try {
